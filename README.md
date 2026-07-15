@@ -8,9 +8,7 @@ A <strong>responsive e-commerce product listing application</strong> built as pa
 </p>
 
 <p align="center">
-This project demonstrates <strong>Server-Side Rendering (SSR)</strong>, responsive UI development,
-dynamic routing, reusable React components, client-side search & pagination,
-TypeScript integration, and unit testing using modern frontend development practices.
+This project was developed as part of the <strong>Frontend (React.js) Intern Assignment</strong> for <strong>BriBooks</strong>, implementing all mandatory requirements along with all available bonus features including <strong>TypeScript, Dynamic Routing, Pagination, and Unit Testing.</strong>
 </p>
 
 <p align="center">
@@ -28,6 +26,7 @@ TypeScript integration, and unit testing using modern frontend development pract
 
 # 📑 Table of Contents
 
+- [🔗 Live Demo](#-live-demo)
 - [📸 Application Preview](#-application-preview)
 - [✨ Key Features](#-key-features)
 - [🛠️ Tech Stack](#️-tech-stack)
@@ -37,7 +36,23 @@ TypeScript integration, and unit testing using modern frontend development pract
 - [💡 Design Decisions & Assumptions](#-design-decisions--assumptions)
 - [🧪 Testing](#-testing)
 - [🌐 API Used](#-api-used)
-- [🔗 Live Demo](#-live-demo)
+
+
+---
+
+# 🔗 Live Demo
+
+The project deployed on **Vercel** with zero additional configuration.
+(https://bribooks-frontend-assignment.vercel.app/)
+
+
+**Note**
+
+The application has been successfully deployed on Vercel.
+
+During deployment, the third-party **Fake Store API** may occasionally return **HTTP 403** for server-side requests originating from certain serverless environments. When this occurs, the application gracefully displays an error message instead of crashing.
+
+The project functions correctly in local development (`npm run dev`) and fulfills the assignment requirements using the specified Fake Store API.
 
 ---
 
@@ -284,14 +299,6 @@ The following reusable components are covered with **unit tests**:
 **Fake Store API**
 
 https://fakestoreapi.com/products
-
----
-
-# 🔗 Live Demo
-
-> **Not deployed.**
-
-The project can be deployed directly on **Vercel** or **Netlify** with zero additional configuration.
 
 ---
 
