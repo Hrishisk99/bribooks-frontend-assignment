@@ -14,7 +14,6 @@ interface HomeProps {
 }
 
 const ITEMS_PER_PAGE = 8;
-// Simulated debounce/filter delay so the loading spinner has something to show.
 const FILTER_DELAY_MS = 300;
 
 const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
@@ -23,15 +22,16 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
   const [isFiltering, setIsFiltering] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Client-side filtering by title, with a small artificial delay so the
-  // spinner requirement is demonstrable (real filtering itself is instant).
   useEffect(() => {
     setIsFiltering(true);
 
     const timeoutId = setTimeout(() => {
       const term = searchTerm.trim().toLowerCase();
+
       const next = term
-        ? initialProducts.filter((p) => p.title.toLowerCase().includes(term))
+        ? initialProducts.filter((p) =>
+            p.title.toLowerCase().includes(term)
+          )
         : initialProducts;
 
       setFilteredProducts(next);
@@ -42,7 +42,10 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, initialProducts]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
+  );
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -64,11 +67,15 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
       <main className="container pb-5">
         <h1 className="h3 mb-4">Our products</h1>
 
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+        />
 
         {fetchError && (
           <div className="alert alert-danger" role="alert">
-            We couldn&apos;t load products right now. Please try refreshing the page.
+            We couldn&apos;t load products right now. Please try refreshing
+            the page.
           </div>
         )}
 
@@ -81,12 +88,17 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
             )}
 
             {!isFiltering && filteredProducts.length === 0 && (
-              <p className="text-muted">No products match &quot;{searchTerm}&quot;.</p>
+              <p className="text-muted">
+                No products match &quot;{searchTerm}&quot;.
+              </p>
             )}
 
             <div className="row">
               {paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
               ))}
             </div>
 
@@ -103,31 +115,68 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
 };
 
 const FETCH_HEADERS: HeadersInit = {
-  'User-Agent':
-    'Mozilla/5.0 (compatible; BriBooksStore/1.0; +https://bribooks-frontend-assignment.vercel.app)',
   Accept: 'application/json',
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
 };
 
-// fakestoreapi.com is a free, occasionally flaky API, so retry once on
-// failure before giving up and showing the error state.
-async function fetchWithRetry(url: string, retries = 1): Promise<Response> {
+async function fetchWithRetry(
+  url: string,
+  retries = 1
+): Promise<Product[]> {
   try {
-    const res = await fetch(url, { headers: FETCH_HEADERS });
-    if (!res.ok) throw new Error(`Fake Store API responded with ${res.status}`);
-    return res;
-  } catch (err) {
+    console.log('======================================');
+    console.log('🚀 Starting SSR Request');
+    console.log('URL:', url);
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: FETCH_HEADERS,
+      cache: 'no-store',
+    });
+
+    console.log('Status:', res.status);
+    console.log('Status Text:', res.statusText);
+
+    const headers = Object.fromEntries(res.headers.entries());
+    console.log('Headers:', headers);
+
+    const body = await res.text();
+
+    console.log('Body:');
+    console.log(body);
+
+    if (!res.ok) {
+      throw new Error(`Fake Store API responded with ${res.status}`);
+    }
+
+    const products: Product[] = JSON.parse(body);
+
+    console.log(`✅ Products fetched: ${products.length}`);
+    console.log('======================================');
+
+    return products;
+  } catch (error) {
+    console.error('======================================');
+    console.error('SSR Fetch Failed');
+    console.error(error);
+    console.error('======================================');
+
     if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log(`Retrying... (${retries} left)`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return fetchWithRetry(url, retries - 1);
     }
-    throw err;
+
+    throw error;
   }
 }
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
   try {
-    const res = await fetchWithRetry('https://fakestoreapi.com/products');
-    const initialProducts: Product[] = await res.json();
+    const initialProducts = await fetchWithRetry(
+      'https://fakestoreapi.com/products'
+    );
 
     return {
       props: {
@@ -136,7 +185,8 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
       },
     };
   } catch (error) {
-    console.error('Failed to fetch products via SSR:', error);
+    console.error('❌ getServerSideProps Error:', error);
+
     return {
       props: {
         initialProducts: [],
