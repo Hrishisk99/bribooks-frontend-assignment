@@ -75,13 +75,33 @@ const ProductDetailsPage: NextPage<ProductDetailsProps> = ({ product }) => {
   );
 };
 
+const FETCH_HEADERS: HeadersInit = {
+  'User-Agent':
+    'Mozilla/5.0 (compatible; BriBooksStore/1.0; +https://bribooks-frontend-assignment.vercel.app)',
+  Accept: 'application/json',
+};
+
+async function fetchWithRetry(url: string, retries = 1): Promise<Response | null> {
+  try {
+    const res = await fetch(url, { headers: FETCH_HEADERS });
+    if (!res.ok) return null;
+    return res;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return fetchWithRetry(url, retries - 1);
+    }
+    return null;
+  }
+}
+
 export const getServerSideProps: GetServerSideProps<ProductDetailsProps> = async (context) => {
   const { id } = context.params as { id: string };
 
   try {
-    const res = await fetch(`https://fakestoreapi.com/products/${id}`);
+    const res = await fetchWithRetry(`https://fakestoreapi.com/products/${id}`);
 
-    if (!res.ok) {
+    if (!res) {
       return { props: { product: null } };
     }
 

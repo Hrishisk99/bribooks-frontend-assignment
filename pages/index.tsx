@@ -102,14 +102,31 @@ const HomePage: NextPage<HomeProps> = ({ initialProducts, fetchError }) => {
   );
 };
 
+const FETCH_HEADERS: HeadersInit = {
+  'User-Agent':
+    'Mozilla/5.0 (compatible; BriBooksStore/1.0; +https://bribooks-frontend-assignment.vercel.app)',
+  Accept: 'application/json',
+};
+
+// fakestoreapi.com is a free, occasionally flaky API, so retry once on
+// failure before giving up and showing the error state.
+async function fetchWithRetry(url: string, retries = 1): Promise<Response> {
+  try {
+    const res = await fetch(url, { headers: FETCH_HEADERS });
+    if (!res.ok) throw new Error(`Fake Store API responded with ${res.status}`);
+    return res;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return fetchWithRetry(url, retries - 1);
+    }
+    throw err;
+  }
+}
+
 export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
   try {
-    const res = await fetch('https://fakestoreapi.com/products');
-
-    if (!res.ok) {
-      throw new Error(`Fake Store API responded with ${res.status}`);
-    }
-
+    const res = await fetchWithRetry('https://fakestoreapi.com/products');
     const initialProducts: Product[] = await res.json();
 
     return {
